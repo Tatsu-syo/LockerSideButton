@@ -6,6 +6,10 @@
 
 マウスの右ボタンを押しながら左ボタンを押すとブラウザなどの戻る動作を、左ボタンを押しながら右ボタンを押すとブラウザなどの進む動作をブラウザやエクスプローラーなどアプリケーションを問わず行うことができます。
 
+## 対応OS
+
+Windows 7/8.1/10/11
+
 ## ビルド
 
 [AutoHotKey](https://www.autohotkey.com/)をインストールしてください。
@@ -17,6 +21,3 @@ LockerSideButton.ahkを実行するとツールの実行ができるので編集
 ## ライセンス
 
 LockerSideButtonは[the MIT License](https://github.com/Tatsu-syo/noMeiryoUI/blob/master/LICENSE)でライセンスしております。
-
-
-
