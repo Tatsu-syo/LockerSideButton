@@ -1,0 +1,29 @@
+LockerSideButton Version 1.0.0
+By Tatsuhiko Shoji 2026
+
+## 本ツールについて
+
+このツールはロッカーナビゲーションを使ってサイドボタンのないマウスでサイドボタンの機能を実現するものです。
+
+マウスの右ボタンを押しながら左ボタンを押すとブラウザなどの戻る動作を、左ボタンを押しながら右ボタンを押すとブラウザなどの進む動作をブラウザやエクスプローラーなどアプリケーションを問わず行うことができます。
+
+## 構成ファイル
+
+LockerSideButton.exe : 32ビット版の実行ファイルです。
+LockerSideButton64.exe : 64ビット版の実行ファイルです。
+LockerSideButton.ahk : AutoHotkey用のソースファイルです。AutoHotkeyをインストールしている場合はそのまま実行できます。
+
+## 実行方法
+
+プラットフォームやAutoHotkeyの有無に合わせて上記ファイルを実行してください。
+
+エクスプローラーなどでマウスの右ボタンを押しながら左ボタンを押すとフォルダー履歴を戻る、
+エクスプローラーなどでマウスの左ボタンを押しながら右ボタンを押すとフォルダー履歴を進む
+事ができます。
+
+## 作者
+
+庄子達彦(Tatsu)
+E-Mail:tatsu_syo@nifty.com
+Web page (開発) : https://github.com/Tatsu-syo/LockerSideButton
+Web page (個人) : https://www.tatsu-syo.info/index.html
