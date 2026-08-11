@@ -11,7 +11,9 @@ By Tatsuhiko Shoji 2026
 
 このプログラムは作ったばかりなので32ビット版実行ファイルがWindows Defenderなどにウイルス扱いされる可能性があります。
 
-AutoHotkeyをインストールして、LockerSideButton.ahkをダウンロードして実行した方が良いかもしれません。
+そのため、32ビット版の実行ファイルは同梱しないことにしました。
+
+AutoHotkeyをインストールして、LockerSideButton.ahkを実行してください。
 
 ## 対応OS
 
@@ -19,7 +21,6 @@ Windows 7/8.1/10/11
 
 ## 構成ファイル
 
-LockerSideButton.exe : 32ビット版の実行ファイルです。
 LockerSideButton64.exe : 64ビット版の実行ファイルです。
 LockerSideButton.ahk : AutoHotkey用のソースファイルです。AutoHotkeyをインストールしている場合はそのまま実行できます。
 
