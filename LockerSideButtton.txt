@@ -1,4 +1,4 @@
-LockerSideButton Version 1.0.0
+LockerSideButton Version 1.0.1
 By Tatsuhiko Shoji 2026
 
 ## –{ƒc[ƒ‹‚É‚Â‚¢‚Ä
