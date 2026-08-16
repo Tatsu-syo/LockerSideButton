@@ -101,8 +101,8 @@ LButton::
 
 Log(msg)
 {
-    FileAppend(
-        Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
-            "h:\test\mouse-debug.log"
-    )
+    ;FileAppend(
+    ;    Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
+    ;        "h:\test\mouse-debug.log"
+    ;)
 }
