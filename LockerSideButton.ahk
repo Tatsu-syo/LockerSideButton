@@ -46,10 +46,13 @@ RButton::
     if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
         return
 
-    ; 右ボタンが押されている間、10msごとに左ボタンが押されるか監視する
+    MouseGetPos(&startX, &startY)
+
+    ; 右ボタンが押されている間、10msごとに左ボタン押下またはドラッグ開始を監視する
     while GetKeyState("RButton", "P")
     {
         Sleep 10
+
         if GetKeyState("LButton", "P")
         {
             Log("LButton detected")
@@ -58,16 +61,24 @@ RButton::
             Log("RButton hotkey end")
             return
         }
+
+        ; 閾値を超えた移動でドラッグと判定し即座に RButtonDown を送信する
+        MouseGetPos(&curX, &curY)
+        if (Abs(curX - startX) > 4 || Abs(curY - startY) > 4)
+        {
+            Log("Drag detected")
+            Send("{RButton Down}")
+            KeyWait("RButton")
+            Send("{RButton Up}")
+            Log("RButton hotkey end (drag)")
+            return
+        }
     }
 
     Log("LButton Not detected")
 
-    ; 右ボタン離し後にまとめて送信することで Chromium の SetCapture を回避する
+    ; 通常の右クリック: まとめて送信（Chromium の SetCapture を回避）
     Send("{RButton Down}")
-    while GetKeyState("RButton", "P")
-    {
-        Sleep 10
-    }
     Send("{RButton Up}")
     return
 }
