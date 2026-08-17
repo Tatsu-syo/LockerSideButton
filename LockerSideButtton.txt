@@ -1,4 +1,4 @@
-LockerSideButton Version 1.0.1
+LockerSideButton Version 1.0.2
 By Tatsuhiko Shoji 2026
 
 ## 本ツールについて
@@ -9,11 +9,9 @@ By Tatsuhiko Shoji 2026
 
 ## 注意!!
 
-このプログラムは作ったばかりなので32ビット版実行ファイルがWindows Defenderなどにウイルス扱いされる可能性があります。
+このプログラムは作ったばかりなので実行ファイルがWindows Defenderなどにウイルス扱いされる可能性があります。
 
-そのため、32ビット版の実行ファイルは同梱しないことにしました。
-
-AutoHotkeyをインストールして、LockerSideButton.ahkを実行してください。
+ウイルス扱いされた場合は実行ファイルを削除したうえでAutoHotkeyをインストールして、LockerSideButton.ahkを実行してください。
 
 ## 対応OS
 
@@ -21,8 +19,10 @@ Windows 7/8.1/10/11
 
 ## 構成ファイル
 
+LockerSideButton.exe : 32ビット版の実行ファイルです。
 LockerSideButton64.exe : 64ビット版の実行ファイルです。
 LockerSideButton.ahk : AutoHotkey用のソースファイルです。AutoHotkeyをインストールしている場合はそのまま実行できます。
+LockerSideButton.txt : 本ファイルです。
 
 ## 実行方法
 

@@ -8,9 +8,9 @@
 
 ## 注意!!
 
-このプログラムは作ったばかりなので32ビット版実行ファイルがWindows Defenderなどにウイルス扱いされる可能性があります。
+このプログラムは作ったばかりなので実行ファイルがWindows Defenderなどにウイルス扱いされる可能性があります。
 
-AutoHotkeyをインストールして、LockerSideButton.ahkをダウンロードして実行した方が良いかもしれません。
+その場合はAutoHotkeyをインストールして、LockerSideButton.ahkをダウンロードして実行してください。
 
 ## 対応OS
 
@@ -20,7 +20,7 @@ Windows 7/8.1/10/11
 
 [AutoHotKey](https://www.autohotkey.com/)をインストールしてください。
 
-LockerSideButton.ahkを実行するとツールの実行ができるので編集するときは本
+LockerSideButton.ahkを実行するとツールの実行ができるので編集するときは本ファイルでテストをします。
 
 実行ファイルを作成する場合、AutoHotKey Dashを起動して、Compileを実行し、SourceにLockerSideButton.ahkを、Destinationに作成する実行ファイルのパス名を、Custom Iconにはiconフォルダにあるicon.icoを、Base Fileにはv2系のAutoHotkey32.exe(32ビット版)、AutoHotkey64.exe(64ビット版)を指定して、Convertボタンを押してください。
 
