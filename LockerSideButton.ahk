@@ -7,149 +7,203 @@
 
 Persistent(true)
 
-addtionalItems := ["WheelDown", "WheelUp", "WheelLeft", "WheelRight"]
+LButtonMonitorActive := false
+LButtonMonitorStart := 0
+RButtonMonitorActive := false
+RButtonMonitorStart := 0
+startX := 0
+startY := 0
+lastWheelEvent := ""
 
 LButton::
 {
+    global LButtonMonitorActive
+
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
 
-    global addtionalItems
+    if (LButtonMonitorActive)
+        return
+
+    LButtonMonitorActive := true
+    LButtonMonitorStart := A_TickCount
 
     Log("LButton hotkey start")
-
-    start := A_TickCount
-
     Send("{LButton Down}")
+    SetTimer(LButtonMonitor, 10)
+    return
+}
 
-    Log("send LButton DOWN")
+LButtonMonitor() {
+    global LButtonMonitorActive
+    global LButtonMonitorStart
+    global lastWheelEvent
 
-    ; 左ボタンが押されている間、10msごとに右ボタンが押されるか監視する
-    while GetKeyState("LButton", "P")
-    {
-        Sleep 10
-        if GetKeyState("RButton", "P")
-        {
-            Log("RButton detected")
-            Send("{LButton Up}")         ; 左ボタンダウンをキャンセル
-            Send("{XButton2}")
+    if (!LButtonMonitorActive)
+        return
 
-            KeyWait("RButton")
-            Log("LButton hotkey end")
-            return
-        }
-
-        ; Mouse Button with Wheels
-        Loop(4) {
-            Sleep 10
-            if GetKeyState(addtionalItems[A_Index], "P")
-            {
-                Log(addtionalItems[A_Index] "WheelDown detected")
-                KeyWait("LButton")
-                Send("{LButton Up}")
-                Log("LButton hotkey end " addtionalItems[A_Index])
-                return
-            }
-        }
-
-        if (A_TickCount - start > 500) {
-            break
-        }
+    ; 左ボタンが離れたら通常のアップを返す
+    if (!GetKeyState("LButton", "P")) {
+        Log("LButton released normally")
+        Send("{LButton Up}")
+        LButtonMonitorActive := false
+        SetTimer(LButtonMonitor, 0)
+        return
     }
 
-    Log("RButton Not detected")
+    ; 右ボタンが押されたら中断して XButton2
+    if (GetKeyState("RButton", "P")) {
+        Log("RButton detected")
+        Send("{LButton Up}")
+        Send("{XButton2}")
+        LButtonMonitorActive := false
+        SetTimer(LButtonMonitor, 0)
+        KeyWait("RButton")
+        return
+    }
 
-    ; 左ボタンが離された（右は押されなかった）ので通常のアップ処理
-    Send("{LButton Up}")
-    return
+    ; ホイールは押下状態を持たないため GetKeyState では検知できず、専用ホットキーが立てるフラグで判定する
+    if (lastWheelEvent != "") {
+        Log(lastWheelEvent " detected")
+        Send("{LButton Up}")
+        LButtonMonitorActive := false
+        SetTimer(LButtonMonitor, 0)
+        lastWheelEvent := ""
+        return
+    }
+
+    ; 長時間の監視は安全のため打ち切る
+    if (A_TickCount - LButtonMonitorStart > 500) {
+        Log("LButton monitor timeout")
+        Send("{LButton Up}")
+        LButtonMonitorActive := false
+        SetTimer(LButtonMonitor, 0)
+    }
 }
 
 RButton::
 {
+    global RButtonMonitorActive
+
     if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
         return
 
-    global addtionalItems
+    if (RButtonMonitorActive)
+        return
+
+    RButtonMonitorActive := true
+    RButtonMonitorStart := A_TickCount
 
     Log("RButton hotkey start")
-
-    start := A_TickCount
-
     MouseGetPos(&startX, &startY)
-
-    ; 右ボタンが押されている間、10msごとに左ボタン押下またはドラッグ開始を監視する
-    while GetKeyState("RButton", "P")
-    {
-        Sleep 10
-
-        if GetKeyState("LButton", "P")
-        {
-            Log("LButton detected")
-            Send("{XButton1}")
-            KeyWait("LButton")
-            Log("RButton hotkey end")
-            return
-        }
-
-        ; 閾値を超えた移動でドラッグと判定し即座に RButtonDown を送信する
-        MouseGetPos(&curX, &curY)
-        if (Abs(curX - startX) > 4 || Abs(curY - startY) > 4)
-        {
-            Log("Drag detected")
-            Send("{RButton Down}")
-            KeyWait("RButton")
-            Send("{RButton Up}")
-            Log("RButton hotkey end (drag)")
-            return
-        }
-
-        ; Mouse Button with Wheels
-        Loop(4) {
-            Sleep 10
-            if GetKeyState(addtionalItems[A_Index], "P")
-            {
-                Log(addtionalItems[A_Index] "WheelDown detected")
-                Send("{RButton Down}")
-                KeyWait("RButton")
-                Send("{RButton Up}")
-                Log("RButton hotkey end " addtionalItems[A_Index])
-                return
-            }
-        }
-
-        if (A_TickCount - start > 500) {
-            break
-        }
-    }
-
-    Log("LButton Not detected")
-
-    ; 通常の右クリック: まとめて送信（Chromium の SetCapture を回避）
-    Send("{RButton Down}")
-    Send("{RButton Up}")
+    SetTimer(RButtonMonitor, 10)
     return
 }
 
-;#When left button is held down, suppress the normal right-button behavior
-#HotIf GetKeyState("LButton", "P")
-RButton::
-{
-    Return
-}
-#HotIf
+RButtonMonitor() {
+    global RButtonMonitorActive
+    global RButtonMonitorStart
+    global lastWheelEvent
+    global startX
+    global startY
 
-#HotIf GetKeyState("RButton", "P")
-LButton::
-{
-    Log("LButton not allowed")
-    Return
+    if (!RButtonMonitorActive)
+        return
+
+    if (!GetKeyState("RButton", "P")) {
+        Log("RButton released - normal right click")
+        Send("{RButton Down}")
+        Send("{RButton Up}")
+        RButtonMonitorActive := false
+        SetTimer(RButtonMonitor, 0)
+        return
+    }
+
+    if (GetKeyState("LButton", "P")) {
+        Log("LButton detected")
+        Send("{XButton1}")
+        RButtonMonitorActive := false
+        SetTimer(RButtonMonitor, 0)
+        KeyWait("LButton")
+        return
+    }
+
+    MouseGetPos(&curX, &curY)
+    if (Abs(curX - startX) > 4 || Abs(curY - startY) > 4) {
+        Log("Drag detected")
+        Send("{RButton Down}")
+        RButtonMonitorActive := false
+        SetTimer(RButtonMonitor, 0)
+        KeyWait("RButton")
+        Send("{RButton Up}")
+        return
+    }
+
+    if (lastWheelEvent != "") {
+        Log(lastWheelEvent " detected")
+        Send("{RButton Down}")
+        RButtonMonitorActive := false
+        SetTimer(RButtonMonitor, 0)
+        lastWheelEvent := ""
+        KeyWait("RButton")
+        Send("{RButton Up}")
+        return
+    }
+
+    if (A_TickCount - RButtonMonitorStart > 500) {
+        Log("RButton monitor timeout")
+        Send("{RButton Down}")
+        Send("{RButton Up}")
+        RButtonMonitorActive := false
+        SetTimer(RButtonMonitor, 0)
+    }
 }
-#HotIf
+
+; ホイールは押下状態を持たないため、専用ホットキーでイベントをフラグに記録する
+WheelDown::
+{
+    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
+    if (LButtonMonitorActive || RButtonMonitorActive) {
+        lastWheelEvent := "WheelDown"
+        return
+    }
+    Send("{WheelDown}")
+}
+
+WheelUp::
+{
+    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
+    if (LButtonMonitorActive || RButtonMonitorActive) {
+        lastWheelEvent := "WheelUp"
+        return
+    }
+    Send("{WheelUp}")
+}
+
+WheelLeft::
+{
+    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
+    if (LButtonMonitorActive || RButtonMonitorActive) {
+        lastWheelEvent := "WheelLeft"
+        return
+    }
+    Send("{WheelLeft}")
+}
+
+WheelRight::
+{
+    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
+    if (LButtonMonitorActive || RButtonMonitorActive) {
+        lastWheelEvent := "WheelRight"
+        return
+    }
+    Send("{WheelRight}")
+}
 
 Log(msg)
 {
-    ;FileAppend(
-    ;    Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
-    ;        "h:\test\mouse-debug.log"
-    ;)
+    FileAppend(
+        Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
+            "h:\test\mouse-debug.log"
+    )
 }
