@@ -1,7 +1,7 @@
-﻿;LockerSideButton version 1.0.2 (C) 2026 Tatsuhiko Shoji
+﻿;LockerSideButton version 1.0.3 (C) 2026 Tatsuhiko Shoji
 ;The sources for LockerSideButton are distributed under the MIT open source license
 
-; Version 1.0.2 2026/08/17
+; Version 1.0.3 2026/08/18
 
 #Requires AutoHotkey v2.0
 
@@ -17,6 +17,8 @@ LButton::
     global addtionalItems
 
     Log("LButton hotkey start")
+
+    start := A_TickCount
 
     Send("{LButton Down}")
 
@@ -39,6 +41,7 @@ LButton::
 
         ; Mouse Button with Wheels
         Loop(4) {
+            Sleep 10
             if GetKeyState(addtionalItems[A_Index], "P")
             {
                 Log(addtionalItems[A_Index] "WheelDown detected")
@@ -47,6 +50,10 @@ LButton::
                 Log("LButton hotkey end " addtionalItems[A_Index])
                 return
             }
+        }
+
+        if (A_TickCount - start > 500) {
+            break
         }
     }
 
@@ -59,12 +66,14 @@ LButton::
 
 RButton::
 {
-    Log("RButton hotkey start")
+    if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
+        return
 
     global addtionalItems
 
-    if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
-        return
+    Log("RButton hotkey start")
+
+    start := A_TickCount
 
     MouseGetPos(&startX, &startY)
 
@@ -96,6 +105,7 @@ RButton::
 
         ; Mouse Button with Wheels
         Loop(4) {
+            Sleep 10
             if GetKeyState(addtionalItems[A_Index], "P")
             {
                 Log(addtionalItems[A_Index] "WheelDown detected")
@@ -105,6 +115,10 @@ RButton::
                 Log("RButton hotkey end " addtionalItems[A_Index])
                 return
             }
+        }
+
+        if (A_TickCount - start > 500) {
+            break
         }
     }
 
