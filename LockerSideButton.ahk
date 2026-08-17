@@ -14,6 +14,8 @@ LButton::
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
 
+    global addtionalItems
+
     Log("LButton hotkey start")
 
     Send("{LButton Down}")
