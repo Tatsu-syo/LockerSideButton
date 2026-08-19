@@ -1,7 +1,7 @@
 ﻿;LockerSideButton version 1.0.3 (C) 2026 Tatsuhiko Shoji
 ;The sources for LockerSideButton are distributed under the MIT open source license
 
-; Version 1.0.3 2026/08/18
+; Version 1.0.3 2026/08/19
 
 #Requires AutoHotkey v2.0
 
@@ -18,11 +18,15 @@ lastWheelEvent := ""
 LButton::
 {
     global LButtonMonitorActive
+    global RButtonMonitorActive
 
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
 
     if (LButtonMonitorActive)
+        return
+
+    if (RButtonMonitorActive)
         return
 
     LButtonMonitorActive := true
@@ -73,22 +77,28 @@ LButtonMonitor() {
     }
 
     ; 長時間の監視は安全のため打ち切る
-    if (A_TickCount - LButtonMonitorStart > 500) {
-        Log("LButton monitor timeout")
-        Send("{LButton Up}")
-        LButtonMonitorActive := false
-        SetTimer(LButtonMonitor, 0)
-    }
+    ;if (A_TickCount - LButtonMonitorStart > 1500) {
+    ;    Log("LButton monitor timeout")
+    ;    Send("{LButton Up}")
+    ;    LButtonMonitorActive := false
+    ;    SetTimer(LButtonMonitor, 0)
+    ;}
 }
 
 RButton::
 {
+    global LButtonMonitorActive
     global RButtonMonitorActive
+    global startX
+    global startY
 
     if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
         return
 
     if (RButtonMonitorActive)
+        return
+
+    if (LButtonMonitorActive)
         return
 
     RButtonMonitorActive := true
@@ -150,13 +160,13 @@ RButtonMonitor() {
         return
     }
 
-    if (A_TickCount - RButtonMonitorStart > 500) {
-        Log("RButton monitor timeout")
-        Send("{RButton Down}")
-        Send("{RButton Up}")
-        RButtonMonitorActive := false
-        SetTimer(RButtonMonitor, 0)
-    }
+    ;if (A_TickCount - RButtonMonitorStart > 1500) {
+    ;    Log("RButton monitor timeout")
+    ;    Send("{RButton Down}")
+    ;    Send("{RButton Up}")
+    ;    RButtonMonitorActive := false
+    ;    SetTimer(RButtonMonitor, 0)
+    ;}
 }
 
 ; ホイールは押下状態を持たないため、専用ホットキーでイベントをフラグに記録する
@@ -202,8 +212,8 @@ WheelRight::
 
 Log(msg)
 {
-    FileAppend(
-        Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
-            "h:\test\mouse-debug.log"
-    )
+    ;FileAppend(
+    ;    Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
+    ;        "h:\test\mouse-debug.log"
+    ;)
 }
