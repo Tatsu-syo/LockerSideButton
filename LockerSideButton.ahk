@@ -14,6 +14,8 @@ RButtonMonitorStart := 0
 startX := 0
 startY := 0
 lastWheelEvent := ""
+ByLButton := false
+
 
 LButton::
 {
@@ -45,6 +47,7 @@ LButtonMonitor() {
     global lastWheelEvent
     global startX
     global startY
+    global ByLButton
 
     static busy := false
     if (busy)
@@ -54,6 +57,8 @@ LButtonMonitor() {
     try {
         if (!LButtonMonitorActive)
             return
+
+        ByLButton := false
 
         ; 左ボタンが離れたら通常のアップを返す
         if (!GetKeyState("LButton", "P")) {
@@ -68,9 +73,10 @@ LButtonMonitor() {
         if (GetKeyState("RButton", "P")) {
             Log("RButton detected")
             Send("{LButton Up}")
-            Send("{XButton2}")
+            Send("{XButton1}")
             LButtonMonitorActive := false
             SetTimer(LButtonMonitor, 0)
+            ByLButton := true
             KeyWait("RButton")
             return
         }
@@ -114,6 +120,7 @@ RButton::
     global RButtonMonitorActive
     global startX
     global startY
+    global ByLButton
 
     if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
         return
@@ -123,6 +130,11 @@ RButton::
 
     if (LButtonMonitorActive)
         return
+
+    if (ByLButton) {
+        ByLButton := false
+        return
+    }
 
     RButtonMonitorActive := true
     RButtonMonitorStart := A_TickCount
@@ -160,10 +172,12 @@ RButtonMonitor() {
 
         if (GetKeyState("LButton", "P")) {
             Log("LButton detected")
-            Send("{XButton1}")
+            Send("{RButton Down}")
+            Send("{XButton2}")
             RButtonMonitorActive := false
             SetTimer(RButtonMonitor, 0)
             KeyWait("LButton")
+            Send("{RButton Up}")
             return
         }
 
