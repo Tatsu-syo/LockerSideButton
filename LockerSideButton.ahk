@@ -97,7 +97,7 @@ LButtonMonitor() {
         }
 
         ; 長時間の監視は安全のため打ち切る
-        if (A_TickCount - LButtonMonitorStart > 1500) {
+        if (A_TickCount - LButtonMonitorStart > 2500) {
         ;    Log("LButton monitor timeout")
             LButtonMonitorActive := false
             Send("{LButton Up}")
@@ -189,7 +189,7 @@ RButtonMonitor() {
             return
         }
 
-        if (A_TickCount - RButtonMonitorStart > 1500) {
+        if (A_TickCount - RButtonMonitorStart > 2500) {
         ;    Log("RButton monitor timeout")
             RButtonMonitorActive := false
             Send("{RButton Down}")
