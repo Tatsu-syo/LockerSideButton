@@ -1,7 +1,7 @@
-﻿;LockerSideButton version 1.0.3 (C) 2026 Tatsuhiko Shoji
+﻿;LockerSideButton version 1.0.4 (C) 2026 Tatsuhiko Shoji
 ;The sources for LockerSideButton are distributed under the MIT open source license
 
-; Version 1.0.3 2026/08/19
+; Version 1.0.4 2026/09/20
 
 #Requires AutoHotkey v2.0
 
@@ -11,14 +11,17 @@ LButtonMonitorActive := false
 LButtonMonitorStart := 0
 RButtonMonitorActive := false
 RButtonMonitorStart := 0
-startX := 0
-startY := 0
+LstartX := 0
+LstartY := 0
+RstartX := 0
+RstartY := 0
 lastWheelEvent := ""
 ByLButton := false
 LButtonSynthDown := false
 RButtonSynthDown := false
+logEnabled := true
 
-LButton::
+$LButton::
 {
     global LButtonMonitorActive
     global RButtonMonitorActive
@@ -31,6 +34,9 @@ LButton::
         return
 
     if (RButtonMonitorActive)
+        return
+
+    if (LButtonSynthDown)
         return
 
     LButtonMonitorActive := true
@@ -47,8 +53,8 @@ LButtonMonitor() {
     global LButtonMonitorActive
     global LButtonMonitorStart
     global lastWheelEvent
-    global startX
-    global startY
+    global LstartX
+    global LstartY
     global ByLButton
     global LButtonSynthDown
 
@@ -95,8 +101,8 @@ LButtonMonitor() {
 
 
         MouseGetPos(&curX, &curY)
-        if (Abs(curX - startX) > 4 || Abs(curY - startY) > 4) {
-            Log("Drag detected")
+        if (Abs(curX - LstartX) > 4 || Abs(curY - LstartY) > 4) {
+            Log("Drag detected by LButton")
             LButtonMonitorActive := false
             SetTimer(LButtonMonitor, 0)
             Send("{LButton Down}")
@@ -145,13 +151,14 @@ LButtonMonitor() {
     }        
 }
 
-RButton::
+$RButton::
 {
     global LButtonMonitorActive
     global RButtonMonitorActive
-    global startX
-    global startY
+    global RstartX
+    global RstartY
     global ByLButton
+    global RButtonSynthDown
 
     if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
         return
@@ -160,6 +167,9 @@ RButton::
         return
 
     if (LButtonMonitorActive)
+        return
+
+    if (RButtonSynthDown)
         return
 
     ;if (ByLButton) {
@@ -171,7 +181,7 @@ RButton::
     RButtonMonitorStart := A_TickCount
 
     Log("RButton hotkey start")
-    MouseGetPos(&startX, &startY)
+    MouseGetPos(&RstartX, &RstartY)
     SetTimer(RButtonMonitor, 20)
     return
 }
@@ -180,8 +190,8 @@ RButtonMonitor() {
     global RButtonMonitorActive
     global RButtonMonitorStart
     global lastWheelEvent
-    global startX
-    global startY
+    global RstartX
+    global RstartY
     global RButtonSynthDown
 
     static busy := false
@@ -222,8 +232,8 @@ RButtonMonitor() {
         }
 
         MouseGetPos(&curX, &curY)
-        if (Abs(curX - startX) > 4 || Abs(curY - startY) > 4) {
-            Log("Drag detected")
+        if (Abs(curX - RstartX) > 4 || Abs(curY - RstartY) > 4) {
+            Log("Drag detected by RButton")
             RButtonMonitorActive := false
             SetTimer(RButtonMonitor, 0)
             ;Send("{RButton Down}")
@@ -259,7 +269,7 @@ RButtonMonitor() {
         ;    Log("RButton monitor timeout")
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
-                LButtonSynthDown := false
+                RButtonSynthDown := false
             } else {
                 Send("{RButton Down}")
                 Send("{RButton Up}")
@@ -315,8 +325,11 @@ WheelRight::
 
 Log(msg)
 {
-    ;FileAppend(
-    ;    Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
-    ;        "h:\test\mouse-debug.log"
-    ;)
+    global logEnabled
+    if (!logEnabled)
+        return
+    FileAppend(
+        Format("{1} {2}`n",FormatTime("HH:mm:ss.SSS"),msg),
+            "h:\test\mouse-debug.log"
+    )
 }
