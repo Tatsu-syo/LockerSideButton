@@ -9,9 +9,8 @@
 
 Persistent(true)
 
-LButtonMonitorActive := false
+ActiveButton := ""
 LButtonMonitorStart := 0
-RButtonMonitorActive := false
 LstartX := 0
 LstartY := 0
 RstartX := 0
@@ -25,8 +24,7 @@ logEnabled := true
 
 $LButton::
 {
-    global LButtonMonitorActive
-    global RButtonMonitorActive
+    global ActiveButton
     global LButtonMonitorStart
     global LstartX
     global LstartY
@@ -37,41 +35,46 @@ $LButton::
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
 
+    Critical("On")
+
     Log("L pressed — L:" GetKeyState("LButton","P") " R:" GetKeyState("RButton","P") " A_PriorHotkey:" A_PriorHotkey)
-    Log("LButtonMonitorActive: " LButtonMonitorActive )
-    Log("RButtonMonitorActive: " RButtonMonitorActive)
+    Log("ActiveButton: " ActiveButton )
     Log("ByRButton: " ByRButton )
     Log("LButtonSynthDown: " LButtonSynthDown)
 
     ; Another hook guard
-    if (ByRButton) {
-        ByRButton := false
+    ;if (ByRButton) {
+    ;    Critical("Off")
+    ;    return
+    ;}
+
+    if (ActiveButton != "") {
+        Critical("Off")
         return
     }
 
-    if (LButtonMonitorActive)
+    if (LButtonSynthDown) {
+        Critical("Off")
         return
-
-    if (RButtonMonitorActive)
-        return
-
-    if (LButtonSynthDown)
-        return
+    }
 
     ; Start monitoring LButton
-    LButtonMonitorActive := true
+    ActiveButton := "L"
     ByLButton := true
+    LButtonSynthDown := false
+    MouseGetPos(&LstartX, &LstartY)
     LButtonMonitorStart := A_TickCount
 
     Log("LButton hotkey start")
-    MouseGetPos(&LstartX, &LstartY)
-    LButtonSynthDown := false
+
+    Critical("Off")
+ 
     SetTimer(LButtonMonitor, 20)
     return
 }
 
 LButtonMonitor() {
-    global LButtonMonitorActive
+    global ActiveButton
     global LButtonMonitorStart
     global lastWheelEvent
     global LstartX
@@ -86,12 +89,9 @@ LButtonMonitor() {
     busy := true
 
     try {
-        if (!LButtonMonitorActive) {
-            ByLButton := false
+        if (ActiveButton != "L") {
             return
         }
-
-        ByRButton := false
 
         ; 左ボタンが離れたら通常のアップを返す
         if (!GetKeyState("LButton", "P")) {
@@ -105,7 +105,7 @@ LButtonMonitor() {
             }
             SetTimer(LButtonMonitor, 0)
             LButtonSynthDown := false
-            LButtonMonitorActive := false
+            ActiveButton := ""
             ByLButton := false
             return
         }
@@ -120,7 +120,7 @@ LButtonMonitor() {
             KeyWait("RButton")
             SetTimer(LButtonMonitor, 0)
             LButtonSynthDown := false
-            LButtonMonitorActive := false
+            ActiveButton := ""
             ByLButton := false
             return
         }
@@ -133,7 +133,7 @@ LButtonMonitor() {
                 Send("{LButton Up}")
             }
             SetTimer(LButtonMonitor, 0)
-            LButtonMonitorActive := false
+            ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
             ;Send("{LButton Down}")
@@ -159,7 +159,7 @@ LButtonMonitor() {
             }
             KeyWait("LButton")
             SetTimer(LButtonMonitor, 0)
-            LButtonMonitorActive := false
+            ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
             lastWheelEvent := ""
@@ -176,7 +176,7 @@ LButtonMonitor() {
                 Send("{LButton Up}")
             }
             SetTimer(LButtonMonitor, 0)
-            LButtonMonitorActive := false
+            ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
         }
@@ -187,17 +187,17 @@ LButtonMonitor() {
 
 $RButton::
 {
-    global LButtonMonitorActive
-    global RButtonMonitorActive
+    global ActiveButton
     global RstartX
     global RstartY
     global ByLButton
     global ByRButton
     global RButtonSynthDown
 
+    Critical("On")
+
     Log("R pressed — L:" GetKeyState("LButton","P") " R:" GetKeyState("RButton","P") " A_PriorHotkey:" A_PriorHotkey)
-    Log("LButtonMonitorActive: " LButtonMonitorActive)
-    Log("RButtonMonitorActive: " RButtonMonitorActive)
+    Log("ActiveButton: " ActiveButton)
     Log("ByLButton: " ByLButton )
     Log("RButtonSynthDown: " RButtonSynthDown)
 
@@ -205,47 +205,37 @@ $RButton::
         return
 
     ; Another hook guard
-    if (ByLButton) {
-        ByLButton := false
+    ;if (ByLButton) {
+    ;    Critical("Off")
+    ;    return
+    ;}
+
+    if (ActiveButton) {
+        Critical("Off")
         return
     }
 
-    if (RButtonMonitorActive)
-        return
-
-    if (LButtonMonitorActive)
-        return
-
     ; Start monitoring RButton
-    RButtonSynthDown := false
+    ActiveButton := "R"
     ByRButton := true
-
-    ;if (LButtonMonitorActive) {
-    ;    Log("RButton pressed while L held — consume and send XButton1")
-    ;    Send("{XButton1}") ; 右→左の組み合わせで戻る等
-    ;    KeyWait("RButton") ; 物理解放を待つ（これで重複発火抑制）
-    ;    return
-    ;}
-    ; 通常の右クリック動作：明示的に発生させる（必要なら）
-    ;Send("{RButton Down}{RButton Up}")
-    ;return
-
-    RButtonMonitorActive := true
+    RButtonSynthDown := false
+    MouseGetPos(&RstartX, &RstartY)
     RButtonMonitorStart := A_TickCount
 
     Log("RButton hotkey start")
-    MouseGetPos(&RstartX, &RstartY)
 
-    while(RButtonMonitorActive) {
+    Critical("Off")
+
+    while(ActiveButton == "R") {
         RButtonMonitor(RButtonMonitorStart)
         ;Log("RButton monitoring loop :" RButtonMonitorActive)
-        if (!RButtonMonitorActive)
+        if (ActiveButton != "R")
             return
 
         Sleep(20)
     }
 
-    RButtonMonitorActive := false
+    ActiveButton := ""
     RButtonSynthDown := false
     ByRButton := false
 
@@ -256,11 +246,12 @@ $RButton::
 }
 
 RButtonMonitor(RButtonMonitorStart) {
-    global RButtonMonitorActive
+    global ActiveButton
     global lastWheelEvent
     global RstartX
     global RstartY
     global RButtonSynthDown
+    global ByRButton
 
     static busy := false
     if (busy)
@@ -270,6 +261,10 @@ RButtonMonitor(RButtonMonitorStart) {
     ;Log("RButton monitoring")
 
     try {
+        if (ActiveButton != "R") {
+            return
+        }
+
         if (!GetKeyState("RButton", "P")) {
             Log("RButton released - normal right click")
             ;Send("{RButton Down}")
@@ -281,7 +276,8 @@ RButtonMonitor(RButtonMonitorStart) {
                 Send("{RButton Up}")
             }
             RButtonSynthDown := false
-            RButtonMonitorActive := false
+            ActiveButton := ""
+            ByRButton := false
             ;SetTimer(RButtonMonitor, 0)
             return
         }
@@ -293,8 +289,9 @@ RButtonMonitor(RButtonMonitorStart) {
             }
             Send("{XButton1}")
             KeyWait("LButton")
-            RButtonMonitorActive := false
+            ActiveButton := ""
             RButtonSynthDown := false
+            ByRButton := false
             ;SetTimer(RButtonMonitor, 0)
             return
         }
@@ -307,7 +304,8 @@ RButtonMonitor(RButtonMonitorStart) {
                 Send("{RButton Up}")
                 RButtonSynthDown := false
             }
-            RButtonMonitorActive := false
+            ActiveButton := ""
+            ByRButton := false
             ;Send("{RButton Down}")
             ;KeyWait("RButton")
             ;Send("{RButton Up}")
@@ -330,7 +328,8 @@ RButtonMonitor(RButtonMonitorStart) {
             Log(lastWheelEvent " detected")
             lastWheelEvent := ""
             RButtonSynthDown := false
-            RButtonMonitorActive := false
+            ActiveButton := ""
+            ByRButton := false
             ;SetTimer(RButtonMonitor, 0)
             ;Send("{RButton Down}")
             ;KeyWait("RButton")
@@ -348,7 +347,8 @@ RButtonMonitor(RButtonMonitorStart) {
                 Send("{RButton Up}")
             }
             RButtonSynthDown := false
-            RButtonMonitorActive := false
+            ActiveButton := ""
+            ByRButton := false
             ;SetTimer(RButtonMonitor, 0)
         }
     } finally {
@@ -359,8 +359,8 @@ RButtonMonitor(RButtonMonitorStart) {
 ; ホイールは押下状態を持たないため、専用ホットキーでイベントをフラグに記録する
 WheelDown::
 {
-    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
-    if (LButtonMonitorActive || RButtonMonitorActive) {
+    global ActiveButton, lastWheelEvent
+    if (ActiveButton != "") {
         lastWheelEvent := "WheelDown"
         return
     }
@@ -369,8 +369,8 @@ WheelDown::
 
 WheelUp::
 {
-    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
-    if (LButtonMonitorActive || RButtonMonitorActive) {
+    global ActiveButton, lastWheelEvent
+    if (ActiveButton != "") {
         lastWheelEvent := "WheelUp"
         return
     }
@@ -379,8 +379,8 @@ WheelUp::
 
 WheelLeft::
 {
-    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
-    if (LButtonMonitorActive || RButtonMonitorActive) {
+    global ActiveButton, lastWheelEvent
+    if (ActiveButton != "") {
         lastWheelEvent := "WheelLeft"
         return
     }
@@ -389,8 +389,8 @@ WheelLeft::
 
 WheelRight::
 {
-    global LButtonMonitorActive, RButtonMonitorActive, lastWheelEvent
-    if (LButtonMonitorActive || RButtonMonitorActive) {
+    global ActiveButton, lastWheelEvent
+    if (ActiveButton != "") {
         lastWheelEvent := "WheelRight"
         return
     }
