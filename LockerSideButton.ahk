@@ -129,6 +129,7 @@ LButtonMonitor() {
         MouseGetPos(&curX, &curY)
         if (Abs(curX - LstartX) > 4 || Abs(curY - LstartY) > 4) {
             Log("Drag detected by LButton")
+            KeyWait("LButton")
             if (LButtonSynthDown) {
                 Send("{LButton Up}")
             }
@@ -136,9 +137,6 @@ LButtonMonitor() {
             ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
-            ;Send("{LButton Down}")
-            ;KeyWait("LButton")
-            ;Send("{LButton Up}")
             return
         }
 
@@ -151,17 +149,6 @@ LButtonMonitor() {
         ; ホイールは押下状態を持たないため GetKeyState では検知できず、専用ホットキーが立てるフラグで判定する
         if (lastWheelEvent != "") {
             Log(lastWheelEvent " detected")
-            if (LButtonSynthDown) {
-                Send("{LButton Up}")
-            } else {
-                Send("{LButton Down}")
-                Send("{LButton Up}")
-            }
-            KeyWait("LButton")
-            SetTimer(LButtonMonitor, 0)
-            ActiveButton := ""
-            LButtonSynthDown := false
-            ByLButton := false
             lastWheelEvent := ""
             return
         }
@@ -299,16 +286,14 @@ RButtonMonitor(RButtonMonitorStart) {
         MouseGetPos(&curX, &curY)
         if (Abs(curX - RstartX) > 4 || Abs(curY - RstartY) > 4) {
             Log("Drag detected by RButton")
+            KeyWait("RButton")
             ;SetTimer(RButtonMonitor, 0)
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
-                RButtonSynthDown := false
             }
             ActiveButton := ""
+            RButtonSynthDown := false
             ByRButton := false
-            ;Send("{RButton Down}")
-            ;KeyWait("RButton")
-            ;Send("{RButton Up}")
             return
         }
 
@@ -319,21 +304,8 @@ RButtonMonitor(RButtonMonitorStart) {
         }
 
         if (lastWheelEvent != "") {
-            if (RButtonSynthDown) {
-                Send("{RButton Up}")
-            } else {
-                Send("{RButton Down}")
-                Send("{RButton Up}")
-            }
             Log(lastWheelEvent " detected")
             lastWheelEvent := ""
-            RButtonSynthDown := false
-            ActiveButton := ""
-            ByRButton := false
-            ;SetTimer(RButtonMonitor, 0)
-            ;Send("{RButton Down}")
-            ;KeyWait("RButton")
-            ;Send("{RButton Up}")
             return
         }
 
