@@ -4,19 +4,21 @@
 ; Version 1.0.4 2026/09/20
 
 #Requires AutoHotkey v2.0
+#Warn VarUnset
+#Warn LocalSameAsGlobal
 
 Persistent(true)
 
 LButtonMonitorActive := false
 LButtonMonitorStart := 0
 RButtonMonitorActive := false
-RButtonMonitorStart := 0
 LstartX := 0
 LstartY := 0
 RstartX := 0
 RstartY := 0
 lastWheelEvent := ""
 ByLButton := false
+ByRButton := false
 LButtonSynthDown := false
 RButtonSynthDown := false
 logEnabled := true
@@ -25,10 +27,27 @@ $LButton::
 {
     global LButtonMonitorActive
     global RButtonMonitorActive
+    global LButtonMonitorStart
+    global LstartX
+    global LstartY
+    global ByLButton
+    global ByRButton
     global LButtonSynthDown
 
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
+
+    Log("L pressed — L:" GetKeyState("LButton","P") " R:" GetKeyState("RButton","P") " A_PriorHotkey:" A_PriorHotkey)
+    Log("LButtonMonitorActive: " LButtonMonitorActive )
+    Log("RButtonMonitorActive: " RButtonMonitorActive)
+    Log("ByRButton: " ByRButton )
+    Log("LButtonSynthDown: " LButtonSynthDown)
+
+    ; Another hook guard
+    if (ByRButton) {
+        ByRButton := false
+        return
+    }
 
     if (LButtonMonitorActive)
         return
@@ -39,11 +58,13 @@ $LButton::
     if (LButtonSynthDown)
         return
 
+    ; Start monitoring LButton
     LButtonMonitorActive := true
+    ByLButton := true
     LButtonMonitorStart := A_TickCount
 
     Log("LButton hotkey start")
-    MouseGetPos(&startX, &startY)
+    MouseGetPos(&LstartX, &LstartY)
     LButtonSynthDown := false
     SetTimer(LButtonMonitor, 20)
     return
@@ -56,6 +77,7 @@ LButtonMonitor() {
     global LstartX
     global LstartY
     global ByLButton
+    global ByRButton
     global LButtonSynthDown
 
     static busy := false
@@ -64,10 +86,12 @@ LButtonMonitor() {
     busy := true
 
     try {
-        if (!LButtonMonitorActive)
+        if (!LButtonMonitorActive) {
+            ByLButton := false
             return
+        }
 
-        ByLButton := false
+        ByRButton := false
 
         ; 左ボタンが離れたら通常のアップを返す
         if (!GetKeyState("LButton", "P")) {
@@ -75,13 +99,14 @@ LButtonMonitor() {
             ;Send("{LButton Down}")
             if (LButtonSynthDown) {
                 Send("{LButton Up}")
-                LButtonSynthDown := false
             } else {
                 Send("{LButton Down}")
                 Send("{LButton Up}")
             }
-            LButtonMonitorActive := false
             SetTimer(LButtonMonitor, 0)
+            LButtonSynthDown := false
+            LButtonMonitorActive := false
+            ByLButton := false
             return
         }
 
@@ -92,10 +117,11 @@ LButtonMonitor() {
                 Send("{LButton Up}")
             }
             Send("{XButton2}")
-            LButtonMonitorActive := false
-            SetTimer(LButtonMonitor, 0)
-            ByLButton := true
             KeyWait("RButton")
+            SetTimer(LButtonMonitor, 0)
+            LButtonSynthDown := false
+            LButtonMonitorActive := false
+            ByLButton := false
             return
         }
 
@@ -103,11 +129,16 @@ LButtonMonitor() {
         MouseGetPos(&curX, &curY)
         if (Abs(curX - LstartX) > 4 || Abs(curY - LstartY) > 4) {
             Log("Drag detected by LButton")
-            LButtonMonitorActive := false
+            if (LButtonSynthDown) {
+                Send("{LButton Up}")
+            }
             SetTimer(LButtonMonitor, 0)
-            Send("{LButton Down}")
-            KeyWait("LButton")
-            Send("{LButton Up}")
+            LButtonMonitorActive := false
+            LButtonSynthDown := false
+            ByLButton := false
+            ;Send("{LButton Down}")
+            ;KeyWait("LButton")
+            ;Send("{LButton Up}")
             return
         }
 
@@ -126,10 +157,12 @@ LButtonMonitor() {
                 Send("{LButton Down}")
                 Send("{LButton Up}")
             }
-            LButtonMonitorActive := false
-            SetTimer(LButtonMonitor, 0)
-            lastWheelEvent := ""
             KeyWait("LButton")
+            SetTimer(LButtonMonitor, 0)
+            LButtonMonitorActive := false
+            LButtonSynthDown := false
+            ByLButton := false
+            lastWheelEvent := ""
             return
         }
 
@@ -138,13 +171,14 @@ LButtonMonitor() {
         ;    Log("LButton monitor timeout")
             if (LButtonSynthDown) {
                 Send("{LButton Up}")
-                LButtonSynthDown := false
             } else {
                 Send("{LButton Down}")
                 Send("{LButton Up}")
             }
-            LButtonMonitorActive := false
             SetTimer(LButtonMonitor, 0)
+            LButtonMonitorActive := false
+            LButtonSynthDown := false
+            ByLButton := false
         }
     } finally {
         busy := false
@@ -158,10 +192,23 @@ $RButton::
     global RstartX
     global RstartY
     global ByLButton
+    global ByRButton
     global RButtonSynthDown
+
+    Log("R pressed — L:" GetKeyState("LButton","P") " R:" GetKeyState("RButton","P") " A_PriorHotkey:" A_PriorHotkey)
+    Log("LButtonMonitorActive: " LButtonMonitorActive)
+    Log("RButtonMonitorActive: " RButtonMonitorActive)
+    Log("ByLButton: " ByLButton )
+    Log("RButtonSynthDown: " RButtonSynthDown)
 
     if (A_PriorHotkey = "RButton" && A_TimeSincePriorHotkey < 50)
         return
+
+    ; Another hook guard
+    if (ByLButton) {
+        ByLButton := false
+        return
+    }
 
     if (RButtonMonitorActive)
         return
@@ -169,26 +216,47 @@ $RButton::
     if (LButtonMonitorActive)
         return
 
-    if (RButtonSynthDown)
-        return
+    ; Start monitoring RButton
+    RButtonSynthDown := false
+    ByRButton := true
 
-    ;if (ByLButton) {
-    ;    ByLButton := false
+    ;if (LButtonMonitorActive) {
+    ;    Log("RButton pressed while L held — consume and send XButton1")
+    ;    Send("{XButton1}") ; 右→左の組み合わせで戻る等
+    ;    KeyWait("RButton") ; 物理解放を待つ（これで重複発火抑制）
     ;    return
     ;}
+    ; 通常の右クリック動作：明示的に発生させる（必要なら）
+    ;Send("{RButton Down}{RButton Up}")
+    ;return
 
     RButtonMonitorActive := true
     RButtonMonitorStart := A_TickCount
 
     Log("RButton hotkey start")
     MouseGetPos(&RstartX, &RstartY)
-    SetTimer(RButtonMonitor, 20)
-    return
+
+    while(RButtonMonitorActive) {
+        RButtonMonitor(RButtonMonitorStart)
+        ;Log("RButton monitoring loop :" RButtonMonitorActive)
+        if (!RButtonMonitorActive)
+            return
+
+        Sleep(20)
+    }
+
+    RButtonMonitorActive := false
+    RButtonSynthDown := false
+    ByRButton := false
+
+    Log("RButton hotkey end")
+
+;    SetTimer(RButtonMonitor, 20)
+;    return
 }
 
-RButtonMonitor() {
+RButtonMonitor(RButtonMonitorStart) {
     global RButtonMonitorActive
-    global RButtonMonitorStart
     global lastWheelEvent
     global RstartX
     global RstartY
@@ -199,23 +267,22 @@ RButtonMonitor() {
         return
     busy := true
 
-    try {
-        if (!RButtonMonitorActive)
-            return
+    ;Log("RButton monitoring")
 
+    try {
         if (!GetKeyState("RButton", "P")) {
             Log("RButton released - normal right click")
             ;Send("{RButton Down}")
             ;Send("{RButton Up}")
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
-                RButtonSynthDown := false
             } else {
                 Send("{RButton Down}")
                 Send("{RButton Up}")
             }
+            RButtonSynthDown := false
             RButtonMonitorActive := false
-            SetTimer(RButtonMonitor, 0)
+            ;SetTimer(RButtonMonitor, 0)
             return
         }
 
@@ -227,15 +294,20 @@ RButtonMonitor() {
             Send("{XButton1}")
             KeyWait("LButton")
             RButtonMonitorActive := false
-            SetTimer(RButtonMonitor, 0)
+            RButtonSynthDown := false
+            ;SetTimer(RButtonMonitor, 0)
             return
         }
 
         MouseGetPos(&curX, &curY)
         if (Abs(curX - RstartX) > 4 || Abs(curY - RstartY) > 4) {
             Log("Drag detected by RButton")
+            ;SetTimer(RButtonMonitor, 0)
+            if (RButtonSynthDown) {
+                Send("{RButton Up}")
+                RButtonSynthDown := false
+            }
             RButtonMonitorActive := false
-            SetTimer(RButtonMonitor, 0)
             ;Send("{RButton Down}")
             ;KeyWait("RButton")
             ;Send("{RButton Up}")
@@ -256,9 +328,10 @@ RButtonMonitor() {
                 Send("{RButton Up}")
             }
             Log(lastWheelEvent " detected")
-            RButtonMonitorActive := false
-            SetTimer(RButtonMonitor, 0)
             lastWheelEvent := ""
+            RButtonSynthDown := false
+            RButtonMonitorActive := false
+            ;SetTimer(RButtonMonitor, 0)
             ;Send("{RButton Down}")
             ;KeyWait("RButton")
             ;Send("{RButton Up}")
@@ -274,8 +347,9 @@ RButtonMonitor() {
                 Send("{RButton Down}")
                 Send("{RButton Up}")
             }
+            RButtonSynthDown := false
             RButtonMonitorActive := false
-            SetTimer(RButtonMonitor, 0)
+            ;SetTimer(RButtonMonitor, 0)
         }
     } finally {
         busy := false
