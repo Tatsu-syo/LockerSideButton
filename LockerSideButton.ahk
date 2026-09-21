@@ -149,6 +149,14 @@ LButtonMonitor() {
         ; ホイールは押下状態を持たないため GetKeyState では検知できず、専用ホットキーが立てるフラグで判定する
         if (lastWheelEvent != "") {
             Log(lastWheelEvent " detected")
+            KeyWait("LButton")
+            if (LButtonSynthDown) {
+                Send("{LButton Up}")
+            }
+            SetTimer(LButtonMonitor, 0)
+            ActiveButton := ""
+            LButtonSynthDown := false
+            ByLButton := false
             lastWheelEvent := ""
             return
         }
@@ -305,6 +313,13 @@ RButtonMonitor(RButtonMonitorStart) {
 
         if (lastWheelEvent != "") {
             Log(lastWheelEvent " detected")
+            KeyWait("RButton")
+            if (RButtonSynthDown) {
+                Send("{RButton Up}")
+            }
+            ActiveButton := ""
+            RButtonSynthDown := false
+            ByRButton := false
             lastWheelEvent := ""
             return
         }
@@ -334,7 +349,7 @@ WheelDown::
     global ActiveButton, lastWheelEvent
     if (ActiveButton != "") {
         lastWheelEvent := "WheelDown"
-        return
+        ;return
     }
     Send("{WheelDown}")
 }
@@ -344,7 +359,7 @@ WheelUp::
     global ActiveButton, lastWheelEvent
     if (ActiveButton != "") {
         lastWheelEvent := "WheelUp"
-        return
+        ;return
     }
     Send("{WheelUp}")
 }
@@ -354,7 +369,7 @@ WheelLeft::
     global ActiveButton, lastWheelEvent
     if (ActiveButton != "") {
         lastWheelEvent := "WheelLeft"
-        return
+        ;return
     }
     Send("{WheelLeft}")
 }
@@ -364,7 +379,7 @@ WheelRight::
     global ActiveButton, lastWheelEvent
     if (ActiveButton != "") {
         lastWheelEvent := "WheelRight"
-        return
+        ;return
     }
     Send("{WheelRight}")
 }
