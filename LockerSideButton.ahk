@@ -6,6 +6,7 @@
 #Requires AutoHotkey v2.0
 #Warn VarUnset
 #Warn LocalSameAsGlobal
+#HotIf !WinActive("ahk_exe vmware.exe")
 
 Persistent(true)
 
@@ -394,3 +395,5 @@ Log(msg)
             "h:\test\mouse-debug.log"
     )
 }
+
+#HotIf
