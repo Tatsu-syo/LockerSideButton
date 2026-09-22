@@ -20,7 +20,7 @@ ByLButton := false
 ByRButton := false
 LButtonSynthDown := false
 RButtonSynthDown := false
-logEnabled := true
+logEnabled := false
 
 $LButton::
 {
