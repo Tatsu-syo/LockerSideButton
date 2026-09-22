@@ -1,4 +1,4 @@
-LockerSideButton Version 1.0.3
+LockerSideButton Version 1.0.4
 By Tatsuhiko Shoji 2026
 
 ## 本ツールについて
@@ -12,6 +12,10 @@ By Tatsuhiko Shoji 2026
 このプログラムは作ったばかりなので実行ファイルがWindows Defenderなどにウイルス扱いされる可能性があります。
 
 ウイルス扱いされた場合は実行ファイルを削除したうえでAutoHotkeyをインストールして、LockerSideButton.ahkを実行してください。
+
+## 制限事項
+
+管理者権限で実行されたプログラムが起動している際はWindowsの仕様により、管理者権限で実行されたプログラムからマウスクリックでのウインドウ切り替えができないのでAlt+Tabキーでウインドウを切り替えてください。
 
 ## 対応OS
 
