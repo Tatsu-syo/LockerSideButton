@@ -1,7 +1,11 @@
 ﻿;LockerSideButton version 1.0.4 (C) 2026 Tatsuhiko Shoji
 ;The sources for LockerSideButton are distributed under the MIT open source license
-
-; Version 1.0.4 2026/09/20
+/************************************************************************
+ * @description LockerSideButton
+ * @author 
+ * @date 2026/09/22
+ * @version 1.0.4
+ ***********************************************************************/
 
 #Requires AutoHotkey v2.0
 #Warn VarUnset
@@ -26,6 +30,28 @@ LButtonSynthDown := false
 RButtonSynthDown := false
 logEnabled := false
 IsDevEnv := 0
+
+; グローバル変数
+PendingNav := ""
+
+; 1回だけ遅延送信する関数（名前で呼ぶ）
+DoPendingNav() {
+    global PendingNav
+    if (PendingNav = "")
+        return
+    tmp := PendingNav
+    PendingNav := ""
+    ; 合成 Up 等のクリーンアップ待ち
+    Sleep(60)                         
+    ; コンテキストメニュー等を閉じる
+    Send("{Esc}")
+    ; コンテキストメニューが閉じるのを待つ
+    ;Sleep(10)                         
+    ; Visual Studio 宛に送る（ControlSend の引数順に注意）
+    ControlSend(tmp, , "ahk_exe devenv.exe")
+    ; 必要ならフォールバック: 
+    ;SendInput(tmp)
+}
 
 IsHookTarget() {
     return !WinActive("ahk_exe vmware.exe")
@@ -95,6 +121,7 @@ LButtonMonitor() {
     global ByRButton
     global LButtonSynthDown
     global IsDevEnv
+    global PendingNav
 
     static busy := false
     if (busy)
@@ -132,6 +159,8 @@ LButtonMonitor() {
             ;Send("{XButton2}")
 
             if (IsDevEnv != 0) {
+                PendingNav := "^+-"
+                SetTimer(DoPendingNav, -1)
             } else {
                 Click("X2")
             }
@@ -266,6 +295,7 @@ RButtonMonitor(RButtonMonitorStart) {
     global RButtonSynthDown
     global ByRButton
     global IsDevEnv
+    global PendingNav
 
     static busy := false
     if (busy)
@@ -304,11 +334,13 @@ RButtonMonitor(RButtonMonitorStart) {
             ;Send("{XButton1}")
 
             if (IsDevEnv != 0) {
+                PendingNav := "^-"
+                SetTimer(DoPendingNav, -1)
             } else {
                 Click("X1")
             }
 
-            KeyWait("LButton")
+            ;KeyWait("LButton")
             ActiveButton := ""
             RButtonSynthDown := false
             ByRButton := false
