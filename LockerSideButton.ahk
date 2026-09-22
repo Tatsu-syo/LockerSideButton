@@ -8,6 +8,9 @@
 #Warn LocalSameAsGlobal
 #HotIf !WinActive("ahk_exe vmware.exe")
 
+; Use Input mode for more reliable synthesized key delivery
+SendMode("Input")
+
 Persistent(true)
 
 ActiveButton := ""
@@ -22,7 +25,17 @@ ByRButton := false
 LButtonSynthDown := false
 RButtonSynthDown := false
 logEnabled := false
+IsDevEnv := 0
 
+IsHookTarget() {
+    return !WinActive("ahk_exe vmware.exe")
+}
+
+IsVisualStudio() {
+    return IsHookTarget() && WinActive("ahk_exe devenv.exe")
+}
+
+; マウス左ボタンフック
 $LButton::
 {
     global ActiveButton
@@ -32,6 +45,7 @@ $LButton::
     global ByLButton
     global ByRButton
     global LButtonSynthDown
+    global IsDevEnv
 
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
@@ -44,11 +58,6 @@ $LButton::
     Log("LButtonSynthDown: " LButtonSynthDown)
 
     ; Another hook guard
-    ;if (ByRButton) {
-    ;    Critical("Off")
-    ;    return
-    ;}
-
     if (ActiveButton != "") {
         Critical("Off")
         return
@@ -65,6 +74,7 @@ $LButton::
     LButtonSynthDown := false
     MouseGetPos(&LstartX, &LstartY)
     LButtonMonitorStart := A_TickCount
+    IsDevEnv := WinActive("ahk_exe devenv.exe")
 
     Log("LButton hotkey start")
 
@@ -74,6 +84,7 @@ $LButton::
     return
 }
 
+; 左ボタン押下後のアクション監視実施関数
 LButtonMonitor() {
     global ActiveButton
     global LButtonMonitorStart
@@ -83,6 +94,7 @@ LButtonMonitor() {
     global ByLButton
     global ByRButton
     global LButtonSynthDown
+    global IsDevEnv
 
     static busy := false
     if (busy)
@@ -117,8 +129,14 @@ LButtonMonitor() {
             if (LButtonSynthDown) {
                 Send("{LButton Up}")
             }
-            Send("{XButton2}")
-            KeyWait("RButton")
+            ;Send("{XButton2}")
+
+            if (IsDevEnv != 0) {
+            } else {
+                Click("X2")
+            }
+
+            ;KeyWait("RButton")
             SetTimer(LButtonMonitor, 0)
             LButtonSynthDown := false
             ActiveButton := ""
@@ -126,7 +144,7 @@ LButtonMonitor() {
             return
         }
 
-
+        ; ドラッグ判定
         MouseGetPos(&curX, &curY)
         if (Abs(curX - LstartX) > 4 || Abs(curY - LstartY) > 4) {
             Log("Drag detected by LButton")
@@ -181,6 +199,7 @@ LButtonMonitor() {
     }        
 }
 
+; マウス右ボタンフック
 $RButton::
 {
     global ActiveButton
@@ -189,6 +208,7 @@ $RButton::
     global ByLButton
     global ByRButton
     global RButtonSynthDown
+    global IsDevEnv
 
     Critical("On")
 
@@ -201,11 +221,6 @@ $RButton::
         return
 
     ; Another hook guard
-    ;if (ByLButton) {
-    ;    Critical("Off")
-    ;    return
-    ;}
-
     if (ActiveButton) {
         Critical("Off")
         return
@@ -217,6 +232,7 @@ $RButton::
     RButtonSynthDown := false
     MouseGetPos(&RstartX, &RstartY)
     RButtonMonitorStart := A_TickCount
+    IsDevEnv := WinActive("ahk_exe devenv.exe")
 
     Log("RButton hotkey start")
 
@@ -241,6 +257,7 @@ $RButton::
 ;    return
 }
 
+; 右ボタン押下後のアクション監視実施関数
 RButtonMonitor(RButtonMonitorStart) {
     global ActiveButton
     global lastWheelEvent
@@ -248,6 +265,7 @@ RButtonMonitor(RButtonMonitorStart) {
     global RstartY
     global RButtonSynthDown
     global ByRButton
+    global IsDevEnv
 
     static busy := false
     if (busy)
@@ -283,7 +301,13 @@ RButtonMonitor(RButtonMonitorStart) {
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
             }
-            Send("{XButton1}")
+            ;Send("{XButton1}")
+
+            if (IsDevEnv != 0) {
+            } else {
+                Click("X1")
+            }
+
             KeyWait("LButton")
             ActiveButton := ""
             RButtonSynthDown := false
@@ -345,6 +369,7 @@ RButtonMonitor(RButtonMonitorStart) {
 }
 
 ; ホイールは押下状態を持たないため、専用ホットキーでイベントをフラグに記録する
+; ホイール下回転フラグ記録フック
 WheelDown::
 {
     global ActiveButton, lastWheelEvent
@@ -355,6 +380,7 @@ WheelDown::
     Send("{WheelDown}")
 }
 
+; ホイール上回転フラグ記録フック
 WheelUp::
 {
     global ActiveButton, lastWheelEvent
@@ -365,6 +391,7 @@ WheelUp::
     Send("{WheelUp}")
 }
 
+; ホイール左チルトフラグ記録フック
 WheelLeft::
 {
     global ActiveButton, lastWheelEvent
@@ -375,6 +402,7 @@ WheelLeft::
     Send("{WheelLeft}")
 }
 
+; ホイール右チルトフラグ記録フック
 WheelRight::
 {
     global ActiveButton, lastWheelEvent
@@ -385,6 +413,7 @@ WheelRight::
     Send("{WheelRight}")
 }
 
+; テスト用ログ記録関数
 Log(msg)
 {
     global logEnabled
@@ -396,4 +425,6 @@ Log(msg)
     )
 }
 
+F12::Send("^-")
+;F12::ControlSend("^-",  ,"ahk_exe devenv.exe")
 #HotIf
