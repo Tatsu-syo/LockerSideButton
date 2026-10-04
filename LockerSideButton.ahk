@@ -49,15 +49,20 @@ DoPendingNav() {
     ; コンテキストメニューが閉じるのを待つ
     ;Sleep(10)                         
     ; Visual Studio 宛に送る（ControlSend の引数順に注意）
-    ControlSend(tmp, , "ahk_exe devenv.exe")
+    ;ControlSend(tmp, , "ahk_exe devenv.exe")
+    if (IsVisualStudio())
+    Send(tmp)
     ; 必要ならフォールバック: 
     ;SendInput(tmp)
 }
 
+; 送信対象プログラムか
 IsHookTarget() {
+    ; VMWare Workstationを除外する。
     return !WinActive("ahk_exe vmware.exe")
 }
 
+;Visual Studioを検知する
 IsVisualStudio() {
     return IsHookTarget() && WinActive("ahk_exe devenv.exe")
 }
@@ -469,6 +474,7 @@ Log(msg)
     )
 }
 
+F11::Send("^+-")
 F12::Send("^-")
 ;F12::ControlSend("^-",  ,"ahk_exe devenv.exe")
 #HotIf
