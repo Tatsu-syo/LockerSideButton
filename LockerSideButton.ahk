@@ -28,8 +28,9 @@ ByLButton := false
 ByRButton := false
 LButtonSynthDown := false
 RButtonSynthDown := false
-logEnabled := false
+logEnabled := true
 IsDevEnv := 0
+iSLTimer := false
 iSRTimer := false
 
 ; グローバル変数
@@ -78,6 +79,7 @@ $LButton::
     global ByRButton
     global LButtonSynthDown
     global IsDevEnv
+    global iSLTimer
 
     if (A_PriorHotkey = "LButton" && A_TimeSincePriorHotkey < 50)
         return
@@ -91,6 +93,9 @@ $LButton::
 
     ; Another hook guard
     if (ActiveButton != "") {
+        if (ActiveButton == "R") {
+            RButtonMonitor()
+        }
         Critical("Off")
         return
     }
@@ -112,6 +117,7 @@ $LButton::
 
     Critical("Off")
  
+    iSLTimer := true
     SetTimer(LButtonMonitor, 20)
     return
 }
@@ -128,6 +134,7 @@ LButtonMonitor() {
     global LButtonSynthDown
     global IsDevEnv
     global PendingNav
+    global iSLTimer
 
     static busy := false
     if (busy)
@@ -151,7 +158,9 @@ LButtonMonitor() {
                 Send("{LButton Down}")
                 Send("{LButton Up}")
             }
-            SetTimer(LButtonMonitor, 0)
+            if (iSLTimer) {
+                SetTimer(LButtonMonitor, 0)
+            }
             LButtonSynthDown := false
             ByLButton := false
             ActiveButton := ""
@@ -174,7 +183,9 @@ LButtonMonitor() {
             }
 
             ;KeyWait("RButton")
-            SetTimer(LButtonMonitor, 0)
+            if (iSLTimer) {
+                SetTimer(LButtonMonitor, 0)
+            }
             LButtonSynthDown := false
             ByLButton := false
             ActiveButton := ""
@@ -189,7 +200,9 @@ LButtonMonitor() {
             if (LButtonSynthDown) {
                 Send("{LButton Up}")
             }
-            SetTimer(LButtonMonitor, 0)
+            if (iSLTimer) {
+                SetTimer(LButtonMonitor, 0)
+            }
             LButtonSynthDown := false
             ByLButton := false
             ActiveButton := ""
@@ -209,7 +222,9 @@ LButtonMonitor() {
             if (LButtonSynthDown) {
                 Send("{LButton Up}")
             }
-            SetTimer(LButtonMonitor, 0)
+            if (iSLTimer) {
+                SetTimer(LButtonMonitor, 0)
+            }
             LButtonSynthDown := false
             ByLButton := false
             lastWheelEvent := ""
@@ -226,7 +241,9 @@ LButtonMonitor() {
                 Send("{LButton Down}")
                 Send("{LButton Up}")
             }
-            SetTimer(LButtonMonitor, 0)
+            if (iSLTimer) {
+                SetTimer(LButtonMonitor, 0)
+            }
             LButtonSynthDown := false
             ByLButton := false
             ActiveButton := ""
@@ -260,7 +277,10 @@ $RButton::
         return
 
     ; Another hook guard
-    if (ActiveButton) {
+    if (ActiveButton != "") {
+        if (ActiveButton == "L") {
+            LButtonMonitor()
+        }
         Critical("Off")
         return
     }
@@ -298,6 +318,7 @@ RButtonMonitor() {
     global PendingNav
     global iSRTimer
 
+    ; 再入防止
     static busy := false
     if (busy)
         return
@@ -312,13 +333,12 @@ RButtonMonitor() {
 
         if (!GetKeyState("RButton", "P")) {
             Log("RButton released normally")
-            ;Send("{RButton Down}")
-            ;Send("{RButton Up}")
+            Send("{RButton Up}")
             if (RButtonSynthDown) {
-                Send("{RButton Up}")
+                ;Send("{RButton Up}")
             } else {
-                Send("{RButton Down}")
-                Send("{RButton Up}")
+                ;Send("{RButton Down}")
+                ;Send("{RButton Up}")
             }
             if (iSRTimer) {
                 SetTimer(RButtonMonitor, 0)
@@ -333,9 +353,8 @@ RButtonMonitor() {
         if (GetKeyState("LButton", "P")) {
             Log("LButton detected")
             if (RButtonSynthDown) {
-                Send("{RButton Up}")
+                ;Send("{RButton Up}")
             }
-            ;Send("{XButton1}")
 
             if (IsDevEnv != 0) {
                 PendingNav := "^-"
@@ -343,6 +362,7 @@ RButtonMonitor() {
             } else {
                 Click("X1")
             }
+            Send("{RButton Up}")
 
             ;KeyWait("LButton")
             if (iSRTimer) {
@@ -355,13 +375,23 @@ RButtonMonitor() {
             return
         }
 
+        if (!iSRTimer) {
+            ; タイマーチェックが設定されてない場合
+            ; ドラッグ検知などを阻害しないように抜ける。
+            Log("iSRTimer not active, exiting RButtonMonitor")
+            Send("{RButton Down}")
+            return
+        }
+
+        ; ドラッグがあったかどうか
         MouseGetPos(&curX, &curY)
         if (Abs(curX - RstartX) > 4 || Abs(curY - RstartY) > 4) {
             Log("Drag detected by RButton")
             KeyWait("RButton")
+            Send("{RButton Up}")
             ;SetTimer(RButtonMonitor, 0)
             if (RButtonSynthDown) {
-                Send("{RButton Up}")
+                ;Send("{RButton Up}")
             }
             if (iSRTimer) {
                 SetTimer(RButtonMonitor, 0)
@@ -375,16 +405,18 @@ RButtonMonitor() {
 
         ; 開始時にのみ合成 Down を送ってドラッグを成立させる
         if (!RButtonSynthDown) {
-            Send("{RButton Down}")
+            ;Send("{RButton Down}")
             RButtonSynthDown := true
         }
 
+        ; マウスホイール操作があったかどうか
         if (lastWheelEvent != "") {
             Log(lastWheelEvent " detected")
             KeyWait("RButton")
-            if (RButtonSynthDown) {
-                Send("{RButton Up}")
-            }
+            Send("{RButton Up}")
+            ;if (RButtonSynthDown) {
+                ;Send("{RButton Up}")
+            ;}
             if (iSRTimer) {
                 SetTimer(RButtonMonitor, 0)
                 iSRTimer := false
@@ -396,13 +428,15 @@ RButtonMonitor() {
             return
         }
 
+        ; タイムアウトチェック
         if (A_TickCount - RButtonMonitorStart > 2500) {
         ;    Log("RButton monitor timeout")
+            Send("{RButton Up}")
             if (RButtonSynthDown) {
-                Send("{RButton Up}")
+                ;Send("{RButton Up}")
             } else {
-                Send("{RButton Down}")
-                Send("{RButton Up}")
+                ;Send("{RButton Down}")
+                ;Send("{RButton Up}")
             }
             if (iSRTimer) {
                 SetTimer(RButtonMonitor, 0)
