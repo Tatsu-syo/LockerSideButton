@@ -30,6 +30,7 @@ LButtonSynthDown := false
 RButtonSynthDown := false
 logEnabled := false
 IsDevEnv := 0
+iSRTimer := false
 
 ; グローバル変数
 PendingNav := ""
@@ -128,6 +129,8 @@ LButtonMonitor() {
         return
     busy := true
 
+    ;Log("LButton monitoring")
+
     try {
         if (ActiveButton != "L") {
             return
@@ -145,8 +148,8 @@ LButtonMonitor() {
             }
             SetTimer(LButtonMonitor, 0)
             LButtonSynthDown := false
-            ActiveButton := ""
             ByLButton := false
+            ActiveButton := ""
             return
         }
 
@@ -168,8 +171,8 @@ LButtonMonitor() {
             ;KeyWait("RButton")
             SetTimer(LButtonMonitor, 0)
             LButtonSynthDown := false
-            ActiveButton := ""
             ByLButton := false
+            ActiveButton := ""
             return
         }
 
@@ -182,9 +185,9 @@ LButtonMonitor() {
                 Send("{LButton Up}")
             }
             SetTimer(LButtonMonitor, 0)
-            ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
+            ActiveButton := ""
             return
         }
 
@@ -202,10 +205,10 @@ LButtonMonitor() {
                 Send("{LButton Up}")
             }
             SetTimer(LButtonMonitor, 0)
-            ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
             lastWheelEvent := ""
+            ActiveButton := ""
             return
         }
 
@@ -219,9 +222,9 @@ LButtonMonitor() {
                 Send("{LButton Up}")
             }
             SetTimer(LButtonMonitor, 0)
-            ActiveButton := ""
             LButtonSynthDown := false
             ByLButton := false
+            ActiveButton := ""
         }
     } finally {
         busy := false
@@ -232,12 +235,14 @@ LButtonMonitor() {
 $RButton::
 {
     global ActiveButton
+    global RButtonMonitorStart
     global RstartX
     global RstartY
     global ByLButton
     global ByRButton
     global RButtonSynthDown
     global IsDevEnv
+    global iSRTimer
 
     Critical("On")
 
@@ -255,6 +260,7 @@ $RButton::
         return
     }
 
+    iSRTimer := false
     ; Start monitoring RButton
     ActiveButton := "R"
     ByRButton := true
@@ -267,28 +273,17 @@ $RButton::
 
     Critical("Off")
 
-    while(ActiveButton == "R") {
-        RButtonMonitor(RButtonMonitorStart)
-        ;Log("RButton monitoring loop :" RButtonMonitorActive)
-        if (ActiveButton != "R")
-            return
+    RButtonMonitor() ; 初回呼び出し
 
-        Sleep(20)
-    }
-
-    ActiveButton := ""
-    RButtonSynthDown := false
-    ByRButton := false
-
-    Log("RButton hotkey end")
-
-;    SetTimer(RButtonMonitor, 20)
-;    return
+    iSRTimer := true
+    SetTimer(RButtonMonitor, 20)
+    return
 }
 
 ; 右ボタン押下後のアクション監視実施関数
-RButtonMonitor(RButtonMonitorStart) {
+RButtonMonitor() {
     global ActiveButton
+    global RButtonMonitorStart
     global lastWheelEvent
     global RstartX
     global RstartY
@@ -296,6 +291,7 @@ RButtonMonitor(RButtonMonitorStart) {
     global ByRButton
     global IsDevEnv
     global PendingNav
+    global iSRTimer
 
     static busy := false
     if (busy)
@@ -310,7 +306,7 @@ RButtonMonitor(RButtonMonitorStart) {
         }
 
         if (!GetKeyState("RButton", "P")) {
-            Log("RButton released - normal right click")
+            Log("RButton released normally")
             ;Send("{RButton Down}")
             ;Send("{RButton Up}")
             if (RButtonSynthDown) {
@@ -319,10 +315,13 @@ RButtonMonitor(RButtonMonitorStart) {
                 Send("{RButton Down}")
                 Send("{RButton Up}")
             }
+            if (iSRTimer) {
+                SetTimer(RButtonMonitor, 0)
+                iSRTimer := false
+            }
             RButtonSynthDown := false
-            ActiveButton := ""
             ByRButton := false
-            ;SetTimer(RButtonMonitor, 0)
+            ActiveButton := ""
             return
         }
 
@@ -341,10 +340,13 @@ RButtonMonitor(RButtonMonitorStart) {
             }
 
             ;KeyWait("LButton")
-            ActiveButton := ""
+            if (iSRTimer) {
+                SetTimer(RButtonMonitor, 0)
+                iSRTimer := false
+            }
             RButtonSynthDown := false
             ByRButton := false
-            ;SetTimer(RButtonMonitor, 0)
+            ActiveButton := ""
             return
         }
 
@@ -356,9 +358,13 @@ RButtonMonitor(RButtonMonitorStart) {
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
             }
-            ActiveButton := ""
+            if (iSRTimer) {
+                SetTimer(RButtonMonitor, 0)
+                iSRTimer := false
+            }
             RButtonSynthDown := false
             ByRButton := false
+            ActiveButton := ""
             return
         }
 
@@ -374,10 +380,14 @@ RButtonMonitor(RButtonMonitorStart) {
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
             }
-            ActiveButton := ""
+            if (iSRTimer) {
+                SetTimer(RButtonMonitor, 0)
+                iSRTimer := false
+            }
             RButtonSynthDown := false
             ByRButton := false
             lastWheelEvent := ""
+            ActiveButton := ""
             return
         }
 
@@ -385,15 +395,17 @@ RButtonMonitor(RButtonMonitorStart) {
         ;    Log("RButton monitor timeout")
             if (RButtonSynthDown) {
                 Send("{RButton Up}")
-                RButtonSynthDown := false
             } else {
                 Send("{RButton Down}")
                 Send("{RButton Up}")
             }
+            if (iSRTimer) {
+                SetTimer(RButtonMonitor, 0)
+                iSRTimer := false
+            }
             RButtonSynthDown := false
-            ActiveButton := ""
             ByRButton := false
-            ;SetTimer(RButtonMonitor, 0)
+            ActiveButton := ""
         }
     } finally {
         busy := false
