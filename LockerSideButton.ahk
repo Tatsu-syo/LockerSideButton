@@ -1,10 +1,10 @@
-﻿;LockerSideButton version 1.0.4 (C) 2026 Tatsuhiko Shoji
+﻿;LockerSideButton version 1.0.5 (C) 2026 Tatsuhiko Shoji
 ;The sources for LockerSideButton are distributed under the MIT open source license
 /************************************************************************
  * @description LockerSideButton
- * @author 
- * @date 2026/09/22
- * @version 1.0.4
+ * @author Tatsuhiko Shoji
+ * @date 2026/10/04
+ * @version 1.0.5
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
